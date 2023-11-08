@@ -6,12 +6,19 @@ import argparse
 parser = argparse.ArgumentParser(description='Combine data')
 
 parser.add_argument('--net', default='ours', type=str, help='which network')
+parser.add_argument('--X', type=int, help='X dimension length')
+parser.add_argument('--Y', type=int, help='Y dimension length')
+parser.add_argument('--Z', type=int, help='Z dimension lenght')
 args = parser.parse_args()
 
 # df = pd.read_csv('statistic/mask_stats.csv')
 # patient = df['Name'].values.tolist()
 
 save_path = '%s/second_phase_data' % args.net
+X = args.X
+Y = args.Y
+Z = args.Z
+
 os.chdir(save_path)
 data_list = [0, 1, 2, 3, 4]
 view_list = ['XY_12', 'XY_3', 'XY_123', 'ZX_12', 'ZX_3', 'ZX_123', 'ZY_12', 'ZY_3', 'ZY_123']
@@ -23,8 +30,8 @@ for i in range(len(data)):
 
 channels = 3
 data = np.concatenate(data, axis=1)
-data = data.reshape((-1, 9, channels, 192, 224, 192))
-data = data.reshape((data.shape[0], channels * 9, 192, 224, 192))
+data = data.reshape((-1, 9, channels, X, Y, Z))
+data = data.reshape((data.shape[0], channels * 9, X, Y, Z))
 print(data.shape)
 np.save('train_data.npy', data)
 del data

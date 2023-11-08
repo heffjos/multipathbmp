@@ -16,9 +16,12 @@ Create some class here
 
 
 class Preprocessing(object):
-    def __init__(self, data_mode='XY', normalize_mode='3'):
+    def __init__(self, X, Y, Z, data_mode='XY', normalize_mode='3'):
         self.data_mode = data_mode
         self.normalize_mode = normalize_mode
+        self.X = X
+        self.Y = Y
+        self.Z = Z
     
     def transform_pair(self, data, label, normalize=False):
         '''
@@ -27,25 +30,25 @@ class Preprocessing(object):
         '''
         train_data = data
         train_label = label
-        assert train_data.shape == (train_data.shape[0], 2, 192, 224, 192)
-        assert train_label.shape == (train_label.shape[0], 192, 224, 192)
+        assert train_data.shape == (train_data.shape[0], 2, self.X, self.Y, self.Z)
+        assert train_label.shape == (train_label.shape[0], self.X, self.Y, self.Z)
 
 
         if self.data_mode == 'XY':
-            train_data = train_data.transpose((0, 2, 1, 3, 4)).reshape((-1, 2, 224, 192))
-            train_label = train_label.reshape((-1, 224, 192))
+            train_data = train_data.transpose((0, 2, 1, 3, 4)).reshape((-1, 2, self.Y, self.Z))
+            train_label = train_label.reshape((-1, self.Y, self.Z))
             train_data[:, 1:2:, :] = train_data[:, 0:1, :, ::-1]
 
 
         elif self.data_mode =='ZY':
-            train_data = train_data.transpose((0, 3, 1, 2, 4)).reshape((-1, 2, 192, 192))
-            train_label = train_label.transpose((0, 2, 1, 3)).reshape((-1, 192, 192))
+            train_data = train_data.transpose((0, 3, 1, 2, 4)).reshape((-1, 2, self.X, self.Z))
+            train_label = train_label.transpose((0, 2, 1, 3)).reshape((-1, self.X, self.Z))
             train_data[:, 1:2:, :] = train_data[:, 0:1, :, ::-1]
 
 
         elif self.data_mode == 'ZX':
-            train_data = train_data.transpose((0, 4, 1, 2, 3)).reshape((-1, 2, 192, 224))
-            train_label = train_label.transpose((0, 3, 1, 2)).reshape((-1, 192, 224))
+            train_data = train_data.transpose((0, 4, 1, 2, 3)).reshape((-1, 2, self.X, self.Y))
+            train_label = train_label.transpose((0, 3, 1, 2)).reshape((-1, self.X, self.Y))
 
         else:
             raise "Does not support %s mode"%self.data_mode
@@ -63,18 +66,18 @@ class Preprocessing(object):
         '''
         train_data = data
 
-        assert train_data.shape == (train_data.shape[0], 2, 192, 224, 192)
+        assert train_data.shape == (train_data.shape[0], 2, self.X, self.Y, self.Z)
 
         if self.data_mode == 'XY':
-            train_data = train_data.transpose((0, 2, 1, 3, 4)).reshape((-1, 2, 224, 192))
+            train_data = train_data.transpose((0, 2, 1, 3, 4)).reshape((-1, 2, self.Y, self.Z))
             train_data[:, 1:2:, :] = train_data[:, 0:1, :, ::-1]
 
         elif self.data_mode == 'ZY':
-            train_data = train_data.transpose((0, 3, 1, 2, 4)).reshape((-1, 2, 192, 192))
+            train_data = train_data.transpose((0, 3, 1, 2, 4)).reshape((-1, 2, self.X, self.Z))
             train_data[:, 1:2:, :] = train_data[:, 0:1, :, ::-1]
 
         elif self.data_mode == 'ZX':
-            train_data = train_data.transpose((0, 4, 1, 2, 3)).reshape((-1, 2, 192, 224))
+            train_data = train_data.transpose((0, 4, 1, 2, 3)).reshape((-1, 2, self.X, self.Y))
 
         else:
             raise "Does not support %s mode" % self.data_mode
@@ -98,14 +101,14 @@ class Preprocessing(object):
 
         elif self.normalize_mode == '3':
             shape = data.shape
-            temp_data = data.reshape((-1, (192*224*192)//data.shape[2]//data.shape[3], 2, data.shape[2], data.shape[3]))
+            temp_data = data.reshape((-1, (self.X*self.Y*self.Z)//data.shape[2]//data.shape[3], 2, data.shape[2], data.shape[3]))
             mean = temp_data.mean(axis=1, dtype=np.float32, keepdims=True)
             std = temp_data.std(axis=1, dtype=np.float32, keepdims=True)
             data = np.nan_to_num((temp_data - mean)/std).reshape(shape)
 
         elif self.normalize_mode == '123':
             shape = data.shape
-            temp_data = data.reshape((-1, (192*224*192)//data.shape[2]//data.shape[3], 2, data.shape[2], data.shape[3]))
+            temp_data = data.reshape((-1, (self.X*self.Y*self.Z)//data.shape[2]//data.shape[3], 2, data.shape[2], data.shape[3]))
             mean = temp_data.mean(axis=1, dtype=np.float32, keepdims=True)
             std = temp_data.std(axis=1, dtype=np.float32, keepdims=True)
             data = np.nan_to_num((temp_data - mean) / std).reshape(shape)
@@ -123,16 +126,16 @@ class Preprocessing(object):
 
         assert len(label.shape) == 3
         if self.data_mode == 'XY':
-            assert label.shape[1:] == (224, 192)
-            label = label.reshape((-1, 192, 224, 192))
+            assert label.shape[1:] == (self.Y, self.Z)
+            label = label.reshape((-1, self.X, self.Y, self.Z))
 
         elif self.data_mode == 'ZY':
-            assert label.shape[1:] == (192, 192)
-            label = label.reshape((-1, 224, 192, 192)).transpose((0, 2, 1, 3))
+            assert label.shape[1:] == (self.X, self.Z)
+            label = label.reshape((-1, self.Y, self.X, self.Z)).transpose((0, 2, 1, 3))
 
         elif self.data_mode == 'ZX':
-            assert label.shape[1:] == (192, 224)
-            label = label.reshape((-1, 192, 192, 224)).transpose((0, 2, 3, 1))
+            assert label.shape[1:] == (self.X, self.Y)
+            label = label.reshape((-1, self.Z, self.X, self.Y)).transpose((0, 2, 3, 1))
 
         return label
 
@@ -147,16 +150,16 @@ class Preprocessing(object):
         assert len(data.shape) == 4
         channels = 3
         if self.data_mode == 'XY':
-            assert data.shape[1:] == (channels, 224, 192)
-            data = data.reshape((-1, 192, channels, 224, 192)).transpose((0, 2, 1, 3, 4))
+            assert data.shape[1:] == (channels, self.Y, self.Z)
+            data = data.reshape((-1, self.X, channels, self.Y, self.Z)).transpose((0, 2, 1, 3, 4))
 
         elif self.data_mode == 'ZY':
-            assert data.shape[1:] == (channels, 192, 192)
-            data = data.reshape((-1, 224, channels, 192, 192)).transpose((0, 2, 3, 1, 4))
+            assert data.shape[1:] == (channels, self.X, self.Z)
+            data = data.reshape((-1, self.Y, channels, self.X, self.Z)).transpose((0, 2, 3, 1, 4))
 
         elif self.data_mode == 'ZX':
-            assert data.shape[1:] == (channels, 192, 224)
-            data = data.reshape((-1, 192, channels, 192, 224)).transpose((0, 2, 3, 4, 1))
+            assert data.shape[1:] == (channels, self.X, self.Y)
+            data = data.reshape((-1, self.Z, channels, sel.X, self.Z)).transpose((0, 2, 3, 4, 1))
 
         return data
 
