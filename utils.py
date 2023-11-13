@@ -159,7 +159,7 @@ class Preprocessing(object):
 
         elif self.data_mode == 'ZX':
             assert data.shape[1:] == (channels, self.X, self.Y)
-            data = data.reshape((-1, self.Z, channels, sel.X, self.Z)).transpose((0, 2, 3, 4, 1))
+            data = data.reshape((-1, self.Z, channels, self.X, self.Z)).transpose((0, 2, 3, 4, 1))
 
         return data
 
